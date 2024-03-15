@@ -33,4 +33,24 @@ public class UsuarioClient {
                         .put(USUARIOS_POR_ID)
                 ;
     }
+
+    public Response buscarUsuario(String id){
+        return
+                given()
+                        .spec(UsuarioSpecs.usuarioReqSpec())
+                        .pathParam("_id", id)
+                        .when()
+                        .get(USUARIOS_POR_ID)
+                ;
+    }
+
+    public Response excluirUsuario(String id){
+        return
+                given()
+                        .spec(UsuarioSpecs.usuarioReqSpec())
+                        .pathParam("_id", id)
+                        .when()
+                        .delete(USUARIOS_POR_ID)
+                ;
+    }
 }

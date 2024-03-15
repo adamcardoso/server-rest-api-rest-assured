@@ -4,17 +4,20 @@ import adam.project.client.usuario.UsuarioClient;
 import adam.project.data.factory.usuario.UsuarioDataFactory;
 import adam.project.model.usuario.UsuarioModel;
 import adam.project.model.usuario.UsuarioResponse;
+import io.restassured.response.Response;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UsuarioFuncionalTest {
     UsuarioClient usuarioClient = new UsuarioClient();
 
     @Test
-    public void testCadastrarUsuarioComSucesso() {
+    void testCadastrarUsuarioComSucesso() {
         UsuarioModel usuario = UsuarioDataFactory.usuarioValido();
 
         UsuarioResponse usuarioResult = usuarioClient.cadastrarUsuario(usuario)
@@ -29,8 +32,20 @@ public class UsuarioFuncionalTest {
         );
     }
 
+
+    // TESTE PARAMETRIZADO
+    @ParameterizedTest
+    @MethodSource("adam.project.data.provider.UsuarioTestData#dadosParaTesteCadastroDeUsuárioComDadosAusentes")
+    void testCadastrarUsuarioComDadosAusentes(UsuarioModel usuarioModel, int statusCodeEsperado, String mensagemEsperada, String key) {
+        usuarioClient.cadastrarUsuario(usuarioModel)
+                .then()
+                .log().all()
+                .statusCode(statusCodeEsperado)
+                .body(key, equalTo(mensagemEsperada));
+    }
+
     @Test
-    public void testCadastrarUsuarioComDadosAusentes() {
+    void testCadastrarUsuarioComDadosAusentes() {
         UsuarioModel usuarioComDadosAusentes = UsuarioDataFactory.usuarioComDadosAusente();
 
         UsuarioResponse usuarioResponse = usuarioClient.cadastrarUsuario(usuarioComDadosAusentes)
@@ -49,7 +64,7 @@ public class UsuarioFuncionalTest {
     }
 
     @Test
-    public void testEditarUsuarioComSucesso() {
+    void testEditarUsuarioComSucesso() {
 
         UsuarioResponse usuarioCadastrado = usuarioClient.cadastrarUsuario(
                 UsuarioDataFactory.usuarioValido()).as(UsuarioResponse.class);
@@ -64,5 +79,26 @@ public class UsuarioFuncionalTest {
         ;
 
         System.out.println("ID do Usuario sendo editado: " + usuarioCadastradoId);
+    }
+
+    @Test
+    void testExcluirUsuarioComSucesso(){
+        UsuarioModel usuarioModel = UsuarioDataFactory.usuarioValido();
+
+        UsuarioResponse usuarioCadastrado = usuarioClient.cadastrarUsuario(usuarioModel)
+                .then()
+                        .log().all()
+                        .statusCode(201)
+                        .extract().as(UsuarioResponse.class);
+
+        Response response = usuarioClient.excluirUsuario(usuarioCadastrado.get_id());
+
+        UsuarioResponse usuarioExcluido = response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .extract().as(UsuarioResponse.class);
+
+        Assertions.assertEquals("Registro excluído com sucesso", usuarioExcluido.getMessage());
     }
 }

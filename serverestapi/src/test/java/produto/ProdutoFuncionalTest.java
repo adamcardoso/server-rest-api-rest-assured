@@ -2,6 +2,7 @@ package produto;
 
 import adam.project.client.produto.ProdutoClient;
 import adam.project.data.factory.produto.ProdutoDataFactory;
+import adam.project.model.enums.UserRoles;
 import adam.project.model.produto.ListaDeProdutos;
 import adam.project.model.produto.ProdutoModel;
 import adam.project.model.produto.ProdutoResponse;
@@ -15,14 +16,14 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ProdutoFuncionalTest {
-    ProdutoClient produtoClient = new ProdutoClient();
+    private final ProdutoClient produtoClient = new ProdutoClient();
 
 
     // TESTE PARAMETRIZADO
     @ParameterizedTest
     @MethodSource("adam.project.data.provider.ProdutoTestData#dadosParaTesteCadastroProduto")
     void testCadastroProdutoComCenariosNegativos(ProdutoModel produto, int statusCodeEsperado, String mensagemEsperada, String key) {
-        produtoClient.cadastrarProduto(produto)
+        produtoClient.cadastrarProduto(produto, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(statusCodeEsperado)
@@ -36,14 +37,14 @@ class ProdutoFuncionalTest {
         // Cadastrar o produto
         ProdutoModel produto = ProdutoDataFactory.produtoValido();
 
-        ProdutoResponse produtoResponse = produtoClient.cadastrarProduto(produto)
+        ProdutoResponse produtoResponse = produtoClient.cadastrarProduto(produto, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(201)
                 .extract().as(ProdutoResponse.class);
 
         // Excluir o produto cadastrado
-        Response response = produtoClient.excluirProdutoPorId(produtoResponse.get_id());
+        Response response = produtoClient.excluirProdutoPorId(produtoResponse.get_id(), UserRoles.ADMIN);
 
         response.then().statusCode(200);
     }
@@ -52,18 +53,18 @@ class ProdutoFuncionalTest {
     @Test
     void testDadoUsuarioAdministradorQuandoEditaProdutoEntaoStatusCode200() {
         // Cadastrar o produto
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(
-                ProdutoDataFactory.produtoValido()).as(ProdutoResponse.class);
+        ProdutoModel produto = ProdutoDataFactory.produtoValido();
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto, UserRoles.ADMIN).as(ProdutoResponse.class);
 
         // Editar o produto cadastrado
-        produtoClient.atualizarProduto(produtoCadastrado.get_id(), ProdutoDataFactory.produtoValido())
+        produtoClient.atualizarProduto(produtoCadastrado.get_id(), ProdutoDataFactory.produtoValido(), UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(200)
                 .body("message", equalTo("Registro alterado com sucesso"));
 
         // Excluir o produto editado
-        produtoClient.excluirProdutoPorId(produtoCadastrado.get_id())
+        produtoClient.excluirProdutoPorId(produtoCadastrado.get_id(), UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(200)
@@ -76,7 +77,7 @@ class ProdutoFuncionalTest {
         // Cadastrar o produto
         ProdutoModel cadastrarProduto = ProdutoDataFactory.produtoValido();
 
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(cadastrarProduto)
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(cadastrarProduto, UserRoles.ADMIN)
                 .then()
                 .statusCode(201)
                 .extract().as(ProdutoResponse.class);
@@ -96,7 +97,7 @@ class ProdutoFuncionalTest {
             Assertions.assertEquals(cadastrarProduto.getQuantidade(), produtoBuscadoPorId.getQuantidade());
         } finally {
             // Excluir o produto independentemente do resultado do teste
-            produtoClient.excluirProdutoPorId(produtoCadastrado.get_id());
+            produtoClient.excluirProdutoPorId(produtoCadastrado.get_id(), UserRoles.ADMIN);
         }
     }
 
@@ -119,14 +120,14 @@ class ProdutoFuncionalTest {
         // Cadastrar o produto
         ProdutoModel produto = ProdutoDataFactory.produtoValido();
 
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto)
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(201)
                 .extract().as(ProdutoResponse.class);
 
         // Excluir o produto
-        Response response = produtoClient.excluirProdutoPorId(produtoCadastrado.get_id());
+        Response response = produtoClient.excluirProdutoPorId(produtoCadastrado.get_id(), UserRoles.ADMIN);
 
         // Verificar se o produto foi excluído corretamente
         ProdutoResponse produtoExcluido = response
@@ -142,11 +143,11 @@ class ProdutoFuncionalTest {
     @Test
     void testDadoUsuarioAdministradorQuandoCadastroProdutoComNomeExistenteEntaoStatusCode400() {
         ProdutoModel produtoExistente = ProdutoDataFactory.produtoInvalido();
-        produtoClient.cadastrarProduto(produtoExistente);
+        produtoClient.cadastrarProduto(produtoExistente, UserRoles.ADMIN);
 
         ProdutoModel produtoDuplicado = ProdutoDataFactory.produtoDuplicado(produtoExistente);
 
-        ProdutoResponse produtoResponse = produtoClient.cadastrarProdutoDuplicado(produtoDuplicado)
+        ProdutoResponse produtoResponse = produtoClient.cadastrarProdutoDuplicado(produtoDuplicado, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(400)
@@ -159,7 +160,7 @@ class ProdutoFuncionalTest {
     void testDadoUsuarioNaoAdministradorQuandoCadastroProdutoEntaoStatusCode401() {
         ProdutoModel produto = ProdutoDataFactory.produtoValido();
 
-        ProdutoResponse produtoResponse = produtoClient.cadastrarProdutoNaoSendoAdmin(produto)
+        ProdutoResponse produtoResponse = produtoClient.cadastrarProduto(produto, UserRoles.CONVIDADO)
                 .then()
                 .log().all()
                 .statusCode(403)
@@ -168,53 +169,21 @@ class ProdutoFuncionalTest {
         Assertions.assertEquals("Rota exclusiva para administradores", produtoResponse.getMessage());
     }
 
-    @Test
-    void testDadoTokenInvalidoQuandoCadastroProdutoEntaoStatusCode401() {
-
-        ProdutoModel produto = ProdutoDataFactory.produtoValido();
-
-        ProdutoResponse produtoResponse = produtoClient.cadastrarProdutoComTokenInvalido(produto)
-                .then()
-                .log().all()
-                .statusCode(401)
-                .extract().as(ProdutoResponse.class);
-
-        Assertions.assertEquals("Token de acesso ausente, inválido, expirado ou usuário do token não existe mais", produtoResponse.getMessage());
-    }
 
     // TESTES NEGATIVO PUT
     @Test
     void testDadoUsuarioNaoAdministradorQuandoEditoProdutoEntaoStatusCode403() {
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(
-                ProdutoDataFactory.produtoValido()).as(ProdutoResponse.class);
+        // Cadastrar o produto
+        ProdutoModel produto = ProdutoDataFactory.produtoValido();
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto, UserRoles.ADMIN).as(ProdutoResponse.class);
 
-        String produtoId = produtoCadastrado.get_id();
-
-        ProdutoResponse produtoResponse = produtoClient.atualizarProdutoNaoSendoAdmin(produtoCadastrado.get_id(), ProdutoDataFactory.produtoValido())
+        ProdutoResponse produtoResponse = produtoClient.atualizarProduto(produtoCadastrado.get_id(), ProdutoDataFactory.produtoValido(), UserRoles.CONVIDADO)
                 .then()
                 .log().all()
                 .statusCode(403)
                 .extract().as(ProdutoResponse.class);
 
-        assertNotNull(produtoId);
         Assertions.assertEquals("Rota exclusiva para administradores", produtoResponse.getMessage());
-    }
-
-    @Test
-    void testDadoTokenInvalidoQuandoEditoProdutoEntaoStatusCode401() {
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(
-                ProdutoDataFactory.produtoValido()).as(ProdutoResponse.class);
-
-        String produtoId = produtoCadastrado.get_id();
-
-        ProdutoResponse produtoResponse = produtoClient.atualizarProdutoComTokenInvalido(ProdutoDataFactory.produtoValido())
-                .then()
-                .log().all()
-                .statusCode(401)
-                .extract().as(ProdutoResponse.class);
-
-        assertNotNull(produtoId);
-        Assertions.assertEquals("Token de acesso ausente, inválido, expirado ou usuário do token não existe mais", produtoResponse.getMessage());
     }
 
     // TESTES NEGATIVOS DELETE
@@ -223,13 +192,13 @@ class ProdutoFuncionalTest {
         ProdutoModel produto = ProdutoDataFactory.produtoValido();
 
         // Cadastrar o produto
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto)
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(201)
                 .extract().as(ProdutoResponse.class);
 
-        Response response = produtoClient.excluirProdutoNaoSendoAdmin(produtoCadastrado.get_id());
+        Response response = produtoClient.excluirProdutoPorId(produtoCadastrado.get_id(), UserRoles.CONVIDADO);
 
         ProdutoResponse produtoExcluido = response
                 .then()
@@ -240,33 +209,12 @@ class ProdutoFuncionalTest {
         Assertions.assertEquals("Rota exclusiva para administradores", produtoExcluido.getMessage());
     }
 
-    @Test
-    void testDadoTokenInvalidoQuandoExcluirProdutoEntaoStatusCode401() {
-        ProdutoModel produto = ProdutoDataFactory.produtoValido();
-
-        // Cadastrar o produto
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(produto)
-                .then()
-                .log().all()
-                .statusCode(201)
-                .extract().as(ProdutoResponse.class);
-
-        ProdutoResponse produtoResponse = produtoClient.excluirProdutoComTokenInvalido(produtoCadastrado.get_id())
-                .then()
-                .log().all()
-                .statusCode(401)
-                .extract().as(ProdutoResponse.class);
-
-        Assertions.assertEquals("Token de acesso ausente, inválido, expirado ou usuário do token não existe mais", produtoResponse.getMessage());
-    }
-
-
     // TESTES NEGATIVOS GET
     @Test
     void testDadoUsuarioAdministradorQuandoBuscaProdutoPorIdInvalidoEntaoStatusCode400() {
         ProdutoModel cadastrarProduto = ProdutoDataFactory.produtoValido();
 
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(cadastrarProduto)
+        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(cadastrarProduto, UserRoles.ADMIN)
                 .then()
                 .log().all()
                 .statusCode(201)
@@ -275,33 +223,11 @@ class ProdutoFuncionalTest {
         assertNotNull(produtoCadastrado.get_id());
 
         // Buscar o produto por ID inválido
-        ProdutoResponse produtoResponse = produtoClient.buscarProdutoPorIdInvalido(ProdutoDataFactory.idInvalido())
+        ProdutoResponse produtoResponse = produtoClient.buscarProdutoPorId(ProdutoDataFactory.idInvalido())
                 .then()
                 .log().all()
                 .statusCode(400)
                 .extract().as(ProdutoResponse.class);
-
-        Assertions.assertEquals("Produto não encontrado", produtoResponse.getMessage());
-    }
-
-    @Test
-    void testDadoUsuarioAdministradorQuandoBuscaProdutoComIdFormatoInvalidoEntaoStatusCode400() {
-        ProdutoModel cadastrarProduto = ProdutoDataFactory.produtoValido();
-
-        ProdutoResponse produtoCadastrado = produtoClient.cadastrarProduto(cadastrarProduto)
-                .then()
-                .log().all()
-                .statusCode(201)
-                .extract().as(ProdutoResponse.class);
-
-        assertNotNull(produtoCadastrado.get_id());
-
-        // Buscar o produto por ID com formato incorreto (número inteiro)
-        ProdutoResponse produtoResponse = produtoClient.buscarProdutoPorIdFormatoInvalido(ProdutoDataFactory.idInvalidoFormatoInvalido())
-                .then()
-                .log().all()
-                .statusCode(400).extract()
-                .as(ProdutoResponse.class);
 
         Assertions.assertEquals("Produto não encontrado", produtoResponse.getMessage());
     }

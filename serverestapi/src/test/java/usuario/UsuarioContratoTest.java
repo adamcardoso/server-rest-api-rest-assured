@@ -1,5 +1,9 @@
 package usuario;
 
+import adam.project.client.usuario.UsuarioClient;
+import adam.project.data.factory.usuario.UsuarioDataFactory;
+import adam.project.model.usuario.UsuarioModel;
+import adam.project.model.usuario.UsuarioResponse;
 import io.restassured.module.jsv.JsonSchemaValidator;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,20 +14,15 @@ import static io.restassured.RestAssured.given;
 
 public class UsuarioContratoTest {
 
-    @BeforeEach
-    public void setUp() {
-        baseURI = "http://localhost:3000";
-    }
+    private static final UsuarioClient usuarioClient = new UsuarioClient();
 
     @Test
-    public void testValidarContratoBuscarPorID() {
-        String idUsuario = "WSY0jqfMsu9aWNDC";
+    void testValidarContratoBuscaPorID() {
+        UsuarioModel usuario = UsuarioDataFactory.usuarioValido();
 
-        given()
-                .log().all()
-                .pathParam("_id", idUsuario)
-                .when()
-                .get("/usuarios/{_id}")
+        UsuarioResponse usuarioCadastrar = usuarioClient.cadastrarUsuario(usuario).as(UsuarioResponse.class);
+
+        usuarioClient.buscarUsuario(usuarioCadastrar.get_id())
                 .then()
                 .statusCode(HttpStatus.SC_OK)
                 .body(JsonSchemaValidator.matchesJsonSchemaInClasspath("schemas/buscar_usuario_id.json"));

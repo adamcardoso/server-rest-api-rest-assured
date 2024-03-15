@@ -38,4 +38,28 @@ public class UsuarioDataFactory {
 
         return novoUsuario;
     }
+
+    public static UsuarioModel usuarioComNomeVazio() {
+        UsuarioModel usuarioModel = novoUsuario();
+        usuarioModel.setNome(StringUtils.EMPTY);
+        return usuarioModel;
+    }
+
+    public static UsuarioModel usuarioComEmailNaoPreenchido() {
+        UsuarioModel usuarioModel = novoUsuario();
+        usuarioModel.setEmail(StringUtils.EMPTY);
+        return usuarioModel;
+    }
+
+    public static UsuarioModel usuarioComSenhaEmBranco() {
+        UsuarioModel usuarioModel = novoUsuario();
+        usuarioModel.setPassword(StringUtils.EMPTY);
+        return usuarioModel;
+    }
+
+    public static UsuarioModel usuarioComRoleInvalida() {
+        UsuarioModel usuarioModel = novoUsuario();
+        usuarioModel.setAdministrador(StringUtils.EMPTY);
+        return usuarioModel;
+    }
 }

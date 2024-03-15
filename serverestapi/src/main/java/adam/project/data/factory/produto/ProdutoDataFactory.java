@@ -2,6 +2,7 @@ package adam.project.data.factory.produto;
 
 import adam.project.model.produto.ProdutoModel;
 import net.datafaker.Faker;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
 
@@ -9,7 +10,7 @@ public class ProdutoDataFactory {
     private static final Faker faker = new Faker(new Locale("PT-BR"));
 
     private static final String ID_INVALIDO = "sfsfwrwr";
-    private static final Integer ID_FORMATO_NAO_ACEITO = 123;
+    private static final Integer NEGATIVE_NUMBER = -1;
 
     private ProdutoDataFactory(){
 
@@ -56,14 +57,10 @@ public class ProdutoDataFactory {
         return ID_INVALIDO;
     }
 
-    public static int idInvalidoFormatoInvalido() {
-        return ID_FORMATO_NAO_ACEITO;
-    }
-
     public static ProdutoModel produtoComPrecoNegativo() {
         ProdutoModel produto = novoProduto();
 
-        produto.setPreco(-1);
+        produto.setPreco(NEGATIVE_NUMBER);
 
         return produto;
     }
@@ -71,7 +68,7 @@ public class ProdutoDataFactory {
     public static ProdutoModel produtoComQuantidaNegativa() {
         ProdutoModel produto = novoProduto();
 
-        produto.setQuantidade(-1);
+        produto.setQuantidade(NEGATIVE_NUMBER);
 
         return produto;
     }
@@ -79,7 +76,7 @@ public class ProdutoDataFactory {
     public static ProdutoModel produtoComNomeVazio() {
         ProdutoModel produto = novoProduto();
 
-        produto.setNome("");
+        produto.setNome(StringUtils.EMPTY);
 
         return produto;
     }
@@ -87,7 +84,7 @@ public class ProdutoDataFactory {
     public static ProdutoModel produtoComDescricaoVazia(){
         ProdutoModel produto = novoProduto();
 
-        produto.setDescricao("");
+        produto.setDescricao(StringUtils.EMPTY);
 
         return produto;
     }
