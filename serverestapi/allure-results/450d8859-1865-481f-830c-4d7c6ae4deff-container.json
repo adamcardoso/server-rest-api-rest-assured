@@ -1,0 +1,1 @@
+{"uuid":"450d8859-1865-481f-830c-4d7c6ae4deff","name":"testValidarContratoBuscarPorID()","children":["4dd0487b-d78a-46e0-9a25-bdb14a2c054d"],"befores":[{"name":"setUp","status":"passed","stage":"finished","steps":[],"attachments":[],"parameters":[],"start":1710467115274,"stop":1710467115804}],"afters":[],"start":1710467115216,"stop":1710467116943}
